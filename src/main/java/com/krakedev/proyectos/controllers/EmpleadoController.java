@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.krakedev.proyectos.entidades.Empleado;
@@ -24,6 +25,8 @@ public class EmpleadoController {
         return new ResponseEntity<>(service.guardar(empleado), HttpStatus.CREATED);
     }
 
+    // ADMIN y USER pueden listar empleados
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
     public List<Empleado> listar() {
         return service.listar();
@@ -31,13 +34,10 @@ public class EmpleadoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Empleado> buscar(@PathVariable int id) {
-
         Empleado empleado = service.buscar(id);
-
         if (empleado == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(empleado);
     }
 
@@ -45,25 +45,19 @@ public class EmpleadoController {
     public ResponseEntity<Empleado> actualizar(
             @PathVariable int id,
             @RequestBody Empleado empleado) {
-
         Empleado actualizado = service.actualizar(id, empleado);
-
         if (actualizado == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(actualizado);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
-
         boolean eliminado = service.eliminar(id);
-
         if (!eliminado) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.noContent().build();
     }
 }

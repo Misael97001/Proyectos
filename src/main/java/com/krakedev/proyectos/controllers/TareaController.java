@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.krakedev.proyectos.entidades.Tarea;
@@ -19,11 +20,15 @@ public class TareaController {
         this.service = service;
     }
 
+    // Solo un ADMIN puede crear tareas
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Tarea> guardar(@RequestBody Tarea tarea) {
         return new ResponseEntity<>(service.guardar(tarea), HttpStatus.CREATED);
     }
 
+    // ADMIN y USER pueden listar tareas
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
     public List<Tarea> listar() {
         return service.listar();
@@ -31,13 +36,10 @@ public class TareaController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Tarea> buscar(@PathVariable int id) {
-
         Tarea tarea = service.buscar(id);
-
         if (tarea == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(tarea);
     }
 
@@ -45,25 +47,19 @@ public class TareaController {
     public ResponseEntity<Tarea> actualizar(
             @PathVariable int id,
             @RequestBody Tarea tarea) {
-
         Tarea actualizada = service.actualizar(id, tarea);
-
         if (actualizada == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(actualizada);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
-
         boolean eliminado = service.eliminar(id);
-
         if (!eliminado) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.noContent().build();
     }
 }

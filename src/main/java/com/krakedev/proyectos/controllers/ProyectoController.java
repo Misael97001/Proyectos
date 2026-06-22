@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.krakedev.proyectos.entidades.Proyecto;
@@ -19,11 +20,15 @@ public class ProyectoController {
         this.service = service;
     }
 
+    // Solo un ADMIN puede crear proyectos nuevos
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Proyecto> guardar(@RequestBody Proyecto proyecto) {
         return new ResponseEntity<>(service.guardar(proyecto), HttpStatus.CREATED);
     }
 
+    // ADMIN y USER pueden listar/consultar proyectos
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
     public List<Proyecto> listar() {
         return service.listar();
@@ -31,13 +36,10 @@ public class ProyectoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Proyecto> buscar(@PathVariable int id) {
-
         Proyecto proyecto = service.buscar(id);
-
         if (proyecto == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(proyecto);
     }
 
@@ -45,25 +47,21 @@ public class ProyectoController {
     public ResponseEntity<Proyecto> actualizar(
             @PathVariable int id,
             @RequestBody Proyecto proyecto) {
-
         Proyecto actualizado = service.actualizar(id, proyecto);
-
         if (actualizado == null) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.ok(actualizado);
     }
 
+    // Solo un ADMIN puede eliminar proyectos
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
-
         boolean eliminado = service.eliminar(id);
-
         if (!eliminado) {
             return ResponseEntity.notFound().build();
         }
-
         return ResponseEntity.noContent().build();
     }
 }
