@@ -10,6 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import com.krakedev.proyectos.entidades.Empleado;
 import com.krakedev.proyectos.services.EmpleadoService;
 
+// EXAMEN 1.3: CORS habilitado para el frontend de React (5173 y 5174)
+@CrossOrigin(
+        origins = { "http://localhost:5173", "http://localhost:5174" },
+        methods = { RequestMethod.GET, RequestMethod.POST,
+                    RequestMethod.PUT, RequestMethod.DELETE },
+        allowedHeaders = { "Authorization", "Content-Type" }
+)
 @RestController
 @RequestMapping("/api/empleados")
 public class EmpleadoController {

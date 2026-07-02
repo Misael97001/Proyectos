@@ -32,6 +32,18 @@ public class TareaService {
 
     public Tarea guardar(Tarea tarea) {
 
+        // EXAMEN 1.1: la prioridad debe ser exactamente ALTA, MEDIA o BAJA
+        // Si no lo es, lanzamos la excepcion y la tarea NO se guarda
+        String prioridad = tarea.getPrioridad();
+
+        if (prioridad == null ||
+                !(prioridad.equals("ALTA")
+                        || prioridad.equals("MEDIA")
+                        || prioridad.equals("BAJA"))) {
+
+            throw new IllegalArgumentException("Prioridad no válida");
+        }
+
         Proyecto proyecto = proyectoRepository
                 .findById(tarea.getProyecto().getId())
                 .orElseThrow(() -> new RuntimeException("Proyecto no existe"));
@@ -76,6 +88,7 @@ public class TareaService {
         tarea.setDescripcion(datos.getDescripcion());
         tarea.setFechaLimite(datos.getFechaLimite());
         tarea.setCostoEstimado(datos.getCostoEstimado());
+        tarea.setPrioridad(datos.getPrioridad()); // tambien se puede actualizar
 
         return repository.save(tarea);
     }

@@ -17,6 +17,11 @@ public class ProyectoService {
         this.repository = repository;
     }
 
+    // EXAMEN 1.2: count() ejecuta SELECT COUNT(*) FROM proyectos y retorna Long
+    public Long contarProyectos() {
+        return repository.count();
+    }
+
     public Proyecto guardar(Proyecto proyecto) {
         return repository.save(proyecto);
     }

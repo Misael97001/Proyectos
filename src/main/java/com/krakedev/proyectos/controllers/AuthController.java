@@ -13,6 +13,13 @@ import com.krakedev.proyectos.security.JwtUtil;
 import com.krakedev.proyectos.services.TokenBlacklistService;
 import com.krakedev.proyectos.services.UsuarioService;
 
+// EXAMEN 1.3: CORS habilitado para el frontend de React (5173 y 5174)
+@CrossOrigin(
+        origins = { "http://localhost:5173", "http://localhost:5174" },
+        methods = { RequestMethod.GET, RequestMethod.POST,
+                    RequestMethod.PUT, RequestMethod.DELETE },
+        allowedHeaders = { "Authorization", "Content-Type" }
+)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -21,7 +28,6 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final TokenBlacklistService blackListService;
 
-    // Inyectamos los 3 componentes que necesitamos
     public AuthController(UsuarioService usuarioService,
                            UsuarioRepository usuarioRepository,
                            TokenBlacklistService blackListService) {
@@ -30,10 +36,7 @@ public class AuthController {
         this.blackListService = blackListService;
     }
 
-    /**
-     * Endpoint: POST /api/auth/registrar
-     * (sin cambios respecto al Hito 1)
-     */
+    // POST /api/auth/registrar (sin cambios)
     @PostMapping("/registrar")
     public ResponseEntity<?> registrar(@RequestBody Usuario usuario) {
         try {
@@ -45,10 +48,9 @@ public class AuthController {
         }
     }
 
-    /**
-     * Endpoint: POST /api/auth/login
-     * NUEVO: ahora genera y retorna un token JWT real
-     */
+    // POST /api/auth/login
+    // EXAMEN Fase 2: ahora retorna token + rol + username,
+    // porque React necesita el rol para el Navbar condicional
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
         String username = credenciales.get("username");
@@ -57,38 +59,31 @@ public class AuthController {
         boolean autenticado = usuarioService.autenticar(username, password);
 
         if (autenticado) {
-            // Buscamos el usuario completo para obtener su rol
             Usuario usuario = usuarioRepository.findByUsername(username).get();
 
-            // Generamos el token JWT con el username y el rol del usuario
             String token = JwtUtil.generarToken(usuario.getUsername(), usuario.getRol());
 
-            // Retornamos el token en la respuesta
-            return ResponseEntity.ok(Map.of("token", token));
+            return ResponseEntity.ok(Map.of(
+                    "token", token,
+                    "rol", usuario.getRol(),
+                    "username", usuario.getUsername()
+            ));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Usuario o contraseña incorrectos");
+                    .body(Map.of("error", "Usuario o contraseña incorrectos"));
         }
     }
 
-    /**
-     * Endpoint: POST /api/auth/logout
-     * NUEVO: invalida el token actual agregándolo a la blacklist
-     *
-     * El cliente debe enviar el header:
-     * Authorization: Bearer <token>
-     */
+    // POST /api/auth/logout: agrega el token a la blacklist
     @PostMapping("/logout")
     public ResponseEntity<?> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        // Verificamos que el header exista y tenga el formato correcto "Bearer <token>"
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-            // substring(7) elimina los primeros 7 caracteres: "Bearer " (con el espacio)
+            // substring(7) quita el prefijo "Bearer "
             String token = authHeader.substring(7);
 
-            // Agregamos el token a la lista negra
             blackListService.invalidarToken(token);
 
             return ResponseEntity.ok(Map.of("mensaje", "Sesión cerrada exitosamente: token invalidado"));
@@ -98,25 +93,15 @@ public class AuthController {
                     .body("Token no proporcionado");
         }
     }
-    
-    
-    /**
-     * Endpoint: GET /api/auth/perfil
-     * Ruta PROTEGIDA: requiere un token válido en el header Authorization
-     * Lee la identidad del usuario directamente desde el contexto de seguridad de Spring,
-     * que fue poblado por nuestro JwtAuthenticationFilter
-     */
+
+    // GET /api/auth/perfil (ruta protegida de prueba)
     @GetMapping("/perfil")
     public ResponseEntity<?> verPerfil() {
 
-        // Obtenemos el objeto de autenticación que el filtro guardó en el contexto
         org.springframework.security.core.Authentication auth =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        // getName() retorna el username (lo guardamos como "subject" en el token)
         String usuario = auth.getName();
-
-        // getAuthorities() retorna los roles; tomamos el primero (en este caso solo tiene uno)
         String rol = auth.getAuthorities().iterator().next().getAuthority();
 
         return ResponseEntity.ok(Map.of(

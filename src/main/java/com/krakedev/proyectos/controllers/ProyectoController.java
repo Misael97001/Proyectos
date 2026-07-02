@@ -10,6 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import com.krakedev.proyectos.entidades.Proyecto;
 import com.krakedev.proyectos.services.ProyectoService;
 
+// EXAMEN 1.3: CORS habilitado para el frontend de React (5173 y 5174)
+@CrossOrigin(
+        origins = { "http://localhost:5173", "http://localhost:5174" },
+        methods = { RequestMethod.GET, RequestMethod.POST,
+                    RequestMethod.PUT, RequestMethod.DELETE },
+        allowedHeaders = { "Authorization", "Content-Type" }
+)
 @RestController
 @RequestMapping("/api/proyectos")
 public class ProyectoController {
@@ -18,6 +25,14 @@ public class ProyectoController {
 
     public ProyectoController(ProyectoService service) {
         this.service = service;
+    }
+
+    // EXAMEN 1.2: endpoint PUBLICO (sin @PreAuthorize).
+    // Ruta completa: GET /api/proyectos/publico/resumen -> retorna el total (Long)
+    @GetMapping("/publico/resumen")
+    public ResponseEntity<Long> resumenPublico() {
+        Long total = service.contarProyectos();
+        return ResponseEntity.ok(total);
     }
 
     // Solo un ADMIN puede crear proyectos nuevos
